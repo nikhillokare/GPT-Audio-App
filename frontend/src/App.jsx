@@ -4,7 +4,6 @@ import axios from "axios";
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import Artyom from 'artyom.js';
 
-
 const artyom = new Artyom();
 
 const options = {
@@ -13,14 +12,13 @@ const options = {
 
 function App() {
   const [gptReply, setGptReply] = useState("");
+  const [listening, setListening] = useState(false);
 
   const {
-    listening,
     resetTranscript,
     browserSupportsSpeechRecognition,
     finalTranscript
   } = useSpeechRecognition();
-
 
   useEffect(() => {
     if (finalTranscript !== "") {
@@ -28,27 +26,24 @@ function App() {
     }
   }, [finalTranscript]);
 
-
-
   if (!browserSupportsSpeechRecognition) {
     return <span>Your Browser doesn't support speech recognition.</span>;
   }
 
   const startListeningAtPress = () => {
+    setListening(true);
     SpeechRecognition.startListening(options);
   };
 
-
-
   const getResponse = async (text) => {
-    await axios.post("https://gpt-audio-web-app-egem.onrender.com/api/voice"
-     ,
+    setListening(false); // Stop showing "Listening..." text when response is received
+    await axios.post("https://gpt-audio-web-app-egem.onrender.com/api/voice",
       {
         text: text
       },
       {
         headers: {
-        'Content-Type': 'application/json',
+          'Content-Type': 'application/json',
           Accept: 'application/json'
         }
       }
@@ -60,15 +55,13 @@ function App() {
     });
   };
 
-
   return (
     <div className="App">
       <div className="main">
-        <p> {listening ? ' listening' : 'Tap To Speak'}</p>
+        <p>{listening ? 'Listening...' : 'Tap To Speak'}</p>
         <button onClick={startListeningAtPress}>Tap Here</button>
-        <button onClick={SpeechRecognition.stopListening}>Stop Here</button>
         <p>{finalTranscript}</p>
-        <p>{gptReply}</p>
+        {gptReply && <p>{gptReply}</p>}
       </div>
     </div>
   );
